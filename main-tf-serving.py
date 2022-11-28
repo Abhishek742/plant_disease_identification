@@ -6,6 +6,8 @@ from PIL import Image
 import requests
 import tensorflow as tf
 from background.u2net_test import *
+import os
+import pandas as pd
 app = FastAPI()
 species_diseases = {
     "apple" : ['Apple_Black_rot', 'Apple_Cedar_Apple_Rust', 'Apple_Healthy', 'Apple_Scab'],
@@ -14,6 +16,7 @@ species_diseases = {
     "tomato" : ['Tomato_Bacterial_spot','Tomato_Early_blight','Tomato_Late_blight','Tomato_Leaf_Mold','Tomato_Septoria_leaf_spot',
                 'Tomato_Spider_mites','Tomato_Target_Spot','Tomato_Tomato_Yellow_Leaf_Curl_Virus','Tomato_Tomato_mosaic_virus','Tomato_healthy']
 }
+info = pd.read_csv("resource_files/disease_info.csv")
 disease_info = {
     "Apple__Apple_scab":{
         "supplement":{
@@ -52,14 +55,18 @@ disease_info = {
 def read_file_as_image(data) -> np.ndarray:
     img = Image.open(BytesIO(data))
     return [np.array(img),img]
+
 def removeBg(image):
-    image.save("/Users/abhishek-pt5840/Desktop/College/mini-project/code/plant-disease/background/src/image.jpeg")
+    path = os.getcwd() + "/background/src/image.jpeg"
+    image.save(path)
     return removeBgColor()
+
 def getJsonData(image):
     img_batch = np.expand_dims(image,0)
     return {
         "instances" : img_batch.tolist()
     }
+    
 def getPrediction(species,json_data):
     endpoint = "http://localhost:8100/v1/models/plant_models_" + species + "/versions/1:predict"
     response = requests.post(endpoint,json=json_data)
@@ -72,10 +79,12 @@ def getPrediction(species,json_data):
         'class' : predicted_class,
         'confidence' : float(confidence)
     }
+
 def getSupplement(class_name):
     return disease_info[class_name]
+
 @app.post("/predict/{species}")
-async def predict(species : str,file: UploadFile = File(...)):   
+async def predict(species : str,file: UploadFile = File(...)):
     [image,imgFile] = read_file_as_image(await file.read()) 
     image = removeBg(imgFile)
     json_data = getJsonData(image)
