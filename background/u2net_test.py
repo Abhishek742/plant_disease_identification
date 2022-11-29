@@ -20,8 +20,15 @@ from background.model import U2NET  # full size version 173.6 MB
 # normalize the predicted SOD probability map
 
 model_name = 'u2net'  # u2netp
-model_dir = '/Users/abhishek-pt5840/Desktop/College/mini-project/code/plant-disease/background/saved_models/' + model_name + '.pth'
+model_dir = os.getcwd() + '/background/saved_models/' + model_name + '.pth'
 net = None
+
+def removeBg(image,species):
+    if(species == "corn"):
+        return image
+    path = os.getcwd() + "/background/src/image.jpeg"
+    image.save(path)
+    return removeBgColor()
 
 def loadModel():
     global net
@@ -54,8 +61,6 @@ def applyMaskToImg(mask, org_img):
     img_cpy[mask > 200] = 0
 
     img = org_img - img_cpy
-
-    # fimg = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
 
     return img
 
@@ -94,10 +99,9 @@ def save_output(image_name, pred, d_dir):
 def removeBgColor():
 
     # --------- 1. get image path and name ---------
+    image_dir = os.getcwd() + '/background/src/'
 
-    image_dir = '/Users/abhishek-pt5840/Desktop/College/mini-project/code/plant-disease/background/src/'
-
-    prediction_dir = '/Users/abhishek-pt5840/Desktop/College/mini-project/code/plant-disease/background/result/'
+    prediction_dir = os.getcwd() + '/background/result/'
 
 
     img_name_list = glob.glob(image_dir + '*')
